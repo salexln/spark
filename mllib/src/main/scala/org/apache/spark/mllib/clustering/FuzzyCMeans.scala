@@ -26,10 +26,12 @@ class FuzzyCMeans(
     private var runs: Int,
     private var initializationMode: String,
     private var initializationSteps: Int,
-    private var epsilon: Double)
+    private var epsilon: Double
+                   )
 //extends KMeans(k,maxIterations, runs, initializationMode, initializationSteps, epsilon)
   extends KMeans
 {
+  val membershipMatrix : MembershipMatrix = null
 
   //override def run(data: RDD[ Vector]): KMeansModel = {
   override  def run(data: RDD[Vector]): KMeansModel = {
@@ -53,6 +55,30 @@ class FuzzyCMeans(
 
   def updateMatrix() = {
     println("updating matrix!!!")
+  }
+
+  override def initCenters(data: RDD[BreezeVectorWithNorm]) :
+  Array[Array[BreezeVectorWithNorm]] = {
+
+
+    /**
+     * calculate the centers according to:
+     *
+     * x_i - the ith of d-dimensional measured data
+     * u_i_j - the degree of membership (taken from the matrix)
+     * c_j - the d-dimension center of the cluster
+     *
+     * c_i = (SUM_i(u_i_j * x_i) ) / (SUM_i (u_i_j) )
+     *
+     */
+
+    //we need to init the centers and the matrix
+
+    //init the matrix:
+
+    //init the centers:
+    val centers = super.initCenters(data)
+    centers
   }
 }
 
@@ -107,7 +133,15 @@ object FuzzyCMeans {
       data: RDD[Vector],
       k: Int,
       maxIterations: Int) : KMeansModel = {
-    train(data,k, maxIterations,1, K_MEANS_PARALLEL,10, 1e-4)
+        train(data,k, maxIterations,1, K_MEANS_PARALLEL,10, 1e-4)
+  }
+
+  def train(
+     data: RDD[Vector],
+     k: Int,
+     maxIterations: Int,
+     runs: Int): KMeansModel = {
+      train(data, k, maxIterations, runs, K_MEANS_PARALLEL, 10, 1e-4)
   }
 }
 
@@ -138,11 +172,11 @@ class MembershipMatrix(
 
   def printMatrix() = {
     println("printing the matrix")
-    for(i<-0 to this.numOfCols){
-      for(j<-0 to numOfCols){
-        println("ff")
-      }
-    }
+//    for(i<-0 to this.numOfCols){
+//      for(j<-0 to numOfCols){
+//        println("ff")
+//      }
+//    }
     println("done printing")
   }
 
