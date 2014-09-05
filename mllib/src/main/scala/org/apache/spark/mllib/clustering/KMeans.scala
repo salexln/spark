@@ -129,19 +129,40 @@ class KMeans private (
   }
 
   /**
-   * Implementation of K-Means using breeze.
+   * do nothing
    */
-  private def runBreeze(data: RDD[BreezeVectorWithNorm]): KMeansModel = {
+  protected def updateInternalData() = {
+  }
 
-    val sc = data.sparkContext
-
-    val initStartTime = System.nanoTime()
-
+  /**
+   * Initialize center Array
+   */
+    protected def initCenters(data: RDD[BreezeVectorWithNorm]) :
+      Array[Array[BreezeVectorWithNorm]] = {
     val centers = if (initializationMode == KMeans.RANDOM) {
       initRandom(data)
     } else {
       initKMeansParallel(data)
     }
+    centers
+  }
+
+
+  /**
+   * Implementation of K-Means using breeze.
+   */
+  protected def runBreeze(data: RDD[BreezeVectorWithNorm]): KMeansModel = {
+
+    val sc = data.sparkContext
+
+    val initStartTime = System.nanoTime()
+
+    val centers = initCenters(data)
+//    val centers = if (initializationMode == KMeans.RANDOM) {
+//      initRandom(data)
+//    } else {
+//      initKMeansParallel(data)
+//    }
 
     val initTimeInSeconds = (System.nanoTime() - initStartTime) / 1e9
     logInfo(s"Initialization with $initializationMode took " + "%.3f".format(initTimeInSeconds) +
