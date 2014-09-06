@@ -61,16 +61,7 @@ class FuzzyCMeans(
   Array[Array[BreezeVectorWithNorm]] = {
 
 
-    /**
-     * calculate the centers according to:
-     *
-     * x_i - the ith of d-dimensional measured data
-     * u_i_j - the degree of membership (taken from the matrix)
-     * c_j - the d-dimension center of the cluster
-     *
-     * c_i = (SUM_i(u_i_j * x_i) ) / (SUM_i (u_i_j) )
-     *
-     */
+
 
     //we need to init the centers and the matrix
 
@@ -80,7 +71,23 @@ class FuzzyCMeans(
     val centers = super.initCenters(data)
     centers
   }
+
+  /**
+   * calculate the centers according to:
+   *
+   * x_i - the ith of d-dimensional measured data
+   * u_i_j - the degree of membership (taken from the matrix)
+   * c_j - the d-dimension center of the cluster
+   *
+   * c_i = (SUM_i(u_i_j * x_i) ) / (SUM_i (u_i_j) )
+   *
+   */
+  override def calculateCenters(data: RDD[BreezeVectorWithNorm]) : KMeansModel  = {
+    super.calculateCenters(data)
+  }
 }
+
+
 
 object FuzzyCMeans {
   // Initialization mode names
