@@ -49,6 +49,9 @@ class KMeans private (
    * Constructs a KMeans instance with default parameters: {k: 2, maxIterations: 20, runs: 1,
    * initializationMode: "k-means||", initializationSteps: 5, epsilon: 1e-4}.
    */
+
+  protected var centers : Array[Array[BreezeVectorWithNorm]] = null
+
   def this() = this(2, 20, 1, KMeans.K_MEANS_PARALLEL, 5, 1e-4)
 
   /** Set the number of clusters to create (k). Default: 2. */
@@ -141,33 +144,15 @@ class KMeans private (
       Array[Array[BreezeVectorWithNorm]] = {
     val centers = if (initializationMode == KMeans.RANDOM) {
       initRandom(data)
-    } else {
+      } else {
       initKMeansParallel(data)
+      }
+      centers
     }
-    centers
-  }
 
-
-  /**
-   * Implementation of K-Means using breeze.
-   */
-  protected def runBreeze(data: RDD[BreezeVectorWithNorm]): KMeansModel = {
+  protected def calculateCenters(data: RDD[BreezeVectorWithNorm]) : KMeansModel  = {
 
     val sc = data.sparkContext
-
-    val initStartTime = System.nanoTime()
-
-    val centers = initCenters(data)
-//    val centers = if (initializationMode == KMeans.RANDOM) {
-//      initRandom(data)
-//    } else {
-//      initKMeansParallel(data)
-//    }
-
-    val initTimeInSeconds = (System.nanoTime() - initStartTime) / 1e9
-    logInfo(s"Initialization with $initializationMode took " + "%.3f".format(initTimeInSeconds) +
-      " seconds.")
-
     val active = Array.fill(runs)(true)
     val costs = Array.fill(runs)(0.0)
 
@@ -185,6 +170,7 @@ class KMeans private (
 
       val activeCenters = activeRuns.map(r => centers(r)).toArray
       val costAccums = activeRuns.map(_ => sc.accumulator(0.0))
+
 
       // Find the sum and count of points mapping to each center
       val totalContribs = data.mapPartitions { points =>
@@ -236,7 +222,6 @@ class KMeans private (
       activeRuns = activeRuns.filter(active(_))
       iteration += 1
     }
-
     val iterationTimeInSeconds = (System.nanoTime() - iterationStartTime) / 1e9
     logInfo(s"Iterations took " + "%.3f".format(iterationTimeInSeconds) + " seconds.")
 
@@ -251,6 +236,118 @@ class KMeans private (
     logInfo(s"The cost for the best run is $minCost.")
 
     new KMeansModel(centers(bestRun).map(c => Vectors.fromBreeze(c.vector)))
+  }
+
+
+  /**
+   * Implementation of K-Means using breeze.
+   */
+  protected def runBreeze(data: RDD[BreezeVectorWithNorm]): KMeansModel = {
+
+//    val sc = data.sparkContext
+
+    val initStartTime = System.nanoTime()
+
+    centers = initCenters(data)
+//    val centers = initCenters(data)
+//    val centers = if (initializationMode == KMeans.RANDOM) {
+//      initRandom(data)
+//    } else {
+//      initKMeansParallel(data)
+//    }
+
+    val initTimeInSeconds = (System.nanoTime() - initStartTime) / 1e9
+    logInfo(s"Initialization with $initializationMode took " + "%.3f".format(initTimeInSeconds) +
+      " seconds.")
+
+    val model = calculateCenters(data)
+    model
+
+//
+//    val active = Array.fill(runs)(true)
+//    val costs = Array.fill(runs)(0.0)
+//
+//    var activeRuns = new ArrayBuffer[Int] ++ (0 until runs)
+//    var iteration = 0
+//
+//    val iterationStartTime = System.nanoTime()
+//
+//    // Execute iterations of Lloyd's algorithm until all runs have converged
+//    while (iteration < maxIterations && !activeRuns.isEmpty) {
+//      type WeightedPoint = (BV[Double], Long)
+//      def mergeContribs(p1: WeightedPoint, p2: WeightedPoint): WeightedPoint = {
+//        (p1._1 += p2._1, p1._2 + p2._2)
+//      }
+//
+//      val activeCenters = activeRuns.map(r => centers(r)).toArray
+//      val costAccums = activeRuns.map(_ => sc.accumulator(0.0))
+//
+//
+//      // Find the sum and count of points mapping to each center
+//      val totalContribs = data.mapPartitions { points =>
+//        val runs = activeCenters.length
+//        val k = activeCenters(0).length
+//        val dims = activeCenters(0)(0).vector.length
+//
+//        val sums = Array.fill(runs, k)(BDV.zeros[Double](dims).asInstanceOf[BV[Double]])
+//        val counts = Array.fill(runs, k)(0L)
+//
+//        points.foreach { point =>
+//          (0 until runs).foreach { i =>
+//            val (bestCenter, cost) = KMeans.findClosest(activeCenters(i), point)
+//            costAccums(i) += cost
+//            sums(i)(bestCenter) += point.vector
+//            counts(i)(bestCenter) += 1
+//          }
+//        }
+//
+//        val contribs = for (i <- 0 until runs; j <- 0 until k) yield {
+//          ((i, j), (sums(i)(j), counts(i)(j)))
+//        }
+//        contribs.iterator
+//      }.reduceByKey(mergeContribs).collectAsMap()
+//
+//      // Update the cluster centers and costs for each active run
+//      for ((run, i) <- activeRuns.zipWithIndex) {
+//        var changed = false
+//        var j = 0
+//        while (j < k) {
+//          val (sum, count) = totalContribs((i, j))
+//          if (count != 0) {
+//            sum /= count.toDouble
+//            val newCenter = new BreezeVectorWithNorm(sum)
+//            if (KMeans.fastSquaredDistance(newCenter, centers(run)(j)) > epsilon * epsilon) {
+//              changed = true
+//            }
+//            centers(run)(j) = newCenter
+//          }
+//          j += 1
+//        }
+//        if (!changed) {
+//          active(run) = false
+//          logInfo("Run " + run + " finished in " + (iteration + 1) + " iterations")
+//        }
+//        costs(run) = costAccums(i).value
+//      }
+//
+//      activeRuns = activeRuns.filter(active(_))
+//      iteration += 1
+//    }
+
+//    val iterationTimeInSeconds = (System.nanoTime() - iterationStartTime) / 1e9
+//    logInfo(s"Iterations took " + "%.3f".format(iterationTimeInSeconds) + " seconds.")
+//
+//    if (iteration == maxIterations) {
+//      logInfo(s"KMeans reached the max number of iterations: $maxIterations.")
+//    } else {
+//      logInfo(s"KMeans converged in $iteration iterations.")
+//    }
+//
+//    val (minCost, bestRun) = costs.zipWithIndex.min
+//
+//    logInfo(s"The cost for the best run is $minCost.")
+
+//    new KMeansModel(centers(bestRun).map(c => Vectors.fromBreeze(c.vector)))
   }
 
   /**
