@@ -1,8 +1,11 @@
 package org.apache.spark.mllib.clustering
 
-import org.apache.spark.mllib.linalg.Vector
+import org.apache.spark.mllib.linalg.{Vectors, Vector}
 import org.apache.spark.rdd.RDD
 import breeze.linalg.{DenseVector => BDV, Vector => BV, norm => breezeNorm}
+
+import scala.collection.mutable.ArrayBuffer
+import scala.util.Random
 
 //import scala.collection.mutable.ArrayBuffer
 //
@@ -59,6 +62,30 @@ class FuzzyCMeans(
 
   override def initCenters(data: RDD[BreezeVectorWithNorm]) :
   Array[Array[BreezeVectorWithNorm]] = {
+    /**
+     * randomly init the membership matrix:
+     * the sum of each row should be 1 - this is the probability of each data point to belong to each cluster
+     */
+    var random = new Random()
+
+
+    for(i <- 0 until     membershipMatrix.getColsNum()-1){
+      var total: Float = 1;
+      for(j <- 0 until membershipMatrix.getRowsNum()-1){
+        if( j == membershipMatrix.getRowsNum() -1){
+          //if this is the last one
+          membershipMatrix.setValue(i,j,total)
+        }
+        else{
+          var temp = random.nextFloat()
+          membershipMatrix.setValue(i,j,temp)
+          total = total - temp
+        }
+      }
+    }
+
+
+
 
 
 
@@ -83,7 +110,32 @@ class FuzzyCMeans(
    *
    */
   override def calculateCenters(data: RDD[BreezeVectorWithNorm]) : KMeansModel  = {
-    super.calculateCenters(data)
+    //super.calculateCenters(data)
+    val sc = data.sparkContext
+    val active = Array.fill(runs)(true)
+    val costs = Array.fill(runs)(0.0)
+
+    var activeRuns = new ArrayBuffer[Int] ++ (0 until runs)
+    var iteration = 0
+
+    val iterationStartTime = System.nanoTime()
+
+    // Execute Dunn & Bezdek algorithm from Fuzzy clustering
+    val notConverged :Boolean = true
+    while(notConverged){
+
+    }
+      //while (iteration < maxIterations && !activeRuns.isEmpty) {
+//      type WeightedPoint = (BV[Double], Long)
+//      def mergeContribs(p1: WeightedPoint, p2: WeightedPoint): WeightedPoint = {
+//        (p1._1 += p2._1, p1._2 + p2._2)
+//      }
+//
+//      val activeCenters = activeRuns.map(r => centers(r)).toArray
+//      val costAccums = activeRuns.map(_ => sc.accumulator(0.0))
+    //}
+    //new KMeansModel(centers(bestRun).map(c => Vectors.fromBreeze(c.vector)))
+    new KMeansModel(null)
   }
 }
 
@@ -165,7 +217,9 @@ class MembershipMatrix(
   def setRowsNum(n:Int) = this.numOfRows = n
   def getColsNum() = this.numOfCols
   def setColsNum(n:Int) = this.numOfCols = n
-
+  def setValue(i: Int, j: Int, value:Float) = {
+    matrix(i)(j) = value
+  }
 
   def initMatrix() = {
     println("initializing the matrix")
