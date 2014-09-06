@@ -62,33 +62,9 @@ class FuzzyCMeans(
 
   override def initCenters(data: RDD[BreezeVectorWithNorm]) :
   Array[Array[BreezeVectorWithNorm]] = {
-    /**
-     * randomly init the membership matrix:
-     * the sum of each row should be 1 - this is the probability of each data point to belong to each cluster
-     */
-    var random = new Random()
 
-
-    for(i <- 0 until     membershipMatrix.getColsNum()-1){
-      var total: Float = 1;
-      for(j <- 0 until membershipMatrix.getRowsNum()-1){
-        if( j == membershipMatrix.getRowsNum() -1){
-          //if this is the last one
-          membershipMatrix.setValue(i,j,total)
-        }
-        else{
-          var temp = random.nextFloat()
-          membershipMatrix.setValue(i,j,temp)
-          total = total - temp
-        }
-      }
-    }
-
-
-
-
-
-
+    //init the membership matrix with random floats
+    membershipMatrix.initRandomMatrix()
 
     //we need to init the centers and the matrix
 
@@ -221,12 +197,25 @@ class MembershipMatrix(
     matrix(i)(j) = value
   }
 
-  def initMatrix() = {
-    println("initializing the matrix")
-    for (i <- 0 to numOfRows) {
-      for (j <- 0 to numOfCols) {
-        //should cast to Float!!!
-        matrix(i)(j) = 0
+  def initRandomMatrix() = {
+    /**
+     * randomly init the membership matrix:
+     * the sum of each row should be 1 - this is the probability of each data point to belong to each cluster
+     */
+    var random = new Random()
+
+    for(i <- 0 until getColsNum()-1){
+      var total: Float = 1;
+      for(j <- 0 until getRowsNum()-1){
+        if( j == getRowsNum() -1){
+          //if this is the last one
+          matrix(i)(j) = total
+        }
+        else{
+          var temp = random.nextFloat()
+          matrix(i)(j) = temp
+          total = total - temp
+        }
       }
     }
   }
