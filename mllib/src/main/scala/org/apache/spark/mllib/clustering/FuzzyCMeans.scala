@@ -23,6 +23,24 @@ import scala.util.Random
 /**
 * Created by alex on 8/12/14.
 */
+
+/**
+ * Fuzzy C Means algorithm psuedo - code:
+ * (taken from
+ *  - http://upetd.up.ac.za/thesis/available/etd-10172011-211435/unrestricted/01chapters1-2.pdf)
+ *  - http://home.deib.polimi.it/matteucc/Clustering/tutorial_html/cmeans.html
+ *
+ * 1. Randomly initialize C clusters
+ * 2. Initialize membership matrix
+ * 3. Repeat
+ *  3.1 Recalculate the centroid of each cluster using:
+ *      c_j = (SUM_i (u_i_j * x_i) ) / (SUM_i(u_i_j))
+ *  3.2 Update the membership matrix U with U' using:
+ *      u_i_j = 1 / (SUM_k ( ( ||x_i - c_j||)/ (||x_i - c_k||) ) ^ (2/(m-1)))
+ *  3.3 Until
+ *      MAX_i_k{ ||u_i_k  - u'_i_k || } < epsilon
+ *
+ */
 class FuzzyCMeans(
     private var k: Int,
     private var maxIterations: Int,
@@ -66,11 +84,7 @@ class FuzzyCMeans(
     //init the membership matrix with random floats
     membershipMatrix.initRandomMatrix()
 
-    //we need to init the centers and the matrix
-
-    //init the matrix:
-
-    //init the centers:
+    //init the centers of the cluster
     val centers = super.initCenters(data)
     centers
   }
@@ -83,7 +97,6 @@ class FuzzyCMeans(
    * c_j - the d-dimension center of the cluster
    *
    * c_i = (SUM_i(u_i_j * x_i) ) / (SUM_i (u_i_j) )
-   *
    */
   override def calculateCenters(data: RDD[BreezeVectorWithNorm]) : KMeansModel  = {
     //super.calculateCenters(data)
@@ -100,7 +113,10 @@ class FuzzyCMeans(
     val notConverged :Boolean = true
     while(notConverged){
 
-    }
+        
+      }
+
+
       //while (iteration < maxIterations && !activeRuns.isEmpty) {
 //      type WeightedPoint = (BV[Double], Long)
 //      def mergeContribs(p1: WeightedPoint, p2: WeightedPoint): WeightedPoint = {
