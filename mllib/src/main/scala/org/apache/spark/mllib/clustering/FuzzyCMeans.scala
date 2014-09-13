@@ -135,7 +135,16 @@ class FuzzyCMeans(
           totalSum += membershipMatrix.getValue(i,j) //*dataArr(i)
         }
 
-        val total = (totalSum / columnSum).toDouble
+        var total = (totalSum / columnSum).toDouble
+        //var total: Double = 0
+
+        var count = 10
+        var sum : Double = 5
+        sum /= count.toDouble
+        var vec : BV[Double]
+        vec(0) = sum
+        val newCenter2 = new BreezeVectorWithNorm(vec)
+
         val newCenter = new BreezeVectorWithNorm(total)
         //var newCenter = totalSum / columnSum
 
