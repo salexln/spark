@@ -116,19 +116,29 @@ class FuzzyCMeans(
     while(notConverged && iteration < maxIterations){
       //data.mapPartitions{ points =>
 
-      //get the data array:
       var dataArr: Array[BreezeVectorWithNorm] = data.toArray()
+
+      // new center calculation:
+      // c_j = (SUM_i(u_i_j * x_i) ) / (SUM_i (u_i_j) )
+      for(j <- 0 until membershipMatrix.getColsNum()){
+
+        // calculate the SUM_i(u_i_j * x_i)
+        var columnSum :Float = 0
+        for(i <- 0 until membershipMatrix.getRowsNum()){
+          columnSum += membershipMatrix.getValue(i, j)
+        }
+
+      }
+      //get the data array:
+
+
 
 
 //        (0 until membershipMatrix.getColsNum()).foreach{ j =>
 //          // new center calculation:
 //          // c_j = (SUM_i(u_i_j * x_i) ) / (SUM_i (u_i_j) )
 //
-//          // calculate the SUM_i(u_i_j)
-          var columnSum :Float = 0
-          for(i <- 0 until membershipMatrix.getRowsNum()){
-            columnSum += membershipMatrix.getValue(i, 0)
-          }
+
 
           // calculate the SUM_i(u_i_j * x_i)
 
