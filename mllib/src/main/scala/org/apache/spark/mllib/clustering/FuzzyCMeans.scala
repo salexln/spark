@@ -128,6 +128,14 @@ class FuzzyCMeans(
           columnSum += membershipMatrix.getValue(i, j)
         }
 
+        val totalSum: Float =0
+        // calculate the SUM_i(u_i_j * x_i)
+        for(i <-0 until membershipMatrix.getRowsNum()){
+          //totalSum = totalSum + membershipMatrix.getValue(i,j) //*dataArr(i)
+        }
+
+        //val newCenter = totalSum / columnSum
+
       }
       //get the data array:
 
@@ -247,7 +255,7 @@ class MembershipMatrix(
     matrix(i)(j) = value
   }
 
-  def getValue(row: Int, col: Int ) = this.matrix(row)(col)
+  def getValue(row: Int, col: Int ) : Float = this.matrix(row)(col)
 
   def initRandomMatrix() = {
     /**
