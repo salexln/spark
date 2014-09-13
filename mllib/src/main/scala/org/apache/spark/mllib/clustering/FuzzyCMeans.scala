@@ -2,7 +2,7 @@ package org.apache.spark.mllib.clustering
 
 import org.apache.spark.mllib.linalg.{Vectors, Vector}
 import org.apache.spark.rdd.RDD
-import breeze.linalg.{DenseVector => BDV, Vector => BV, norm => breezeNorm}
+import breeze.linalg.{DenseVector => BDV, Vector => BV, norm => breezeNorm, *}
 
 import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
@@ -36,10 +36,10 @@ import scala.util.Random
  *  3.1 Recalculate the centroid of each cluster using:
  *      c_j = (SUM_i (u_i_j * x_i) ) / (SUM_i(u_i_j))
  *  3.2 Update the membership matrix U with U' using:
- *      u_i_j = 1 / (SUM_k ( ( ||x_i - c_j||)/ (||x_i - c_k||) ) ^ (2/(m-1)))
+ *      u_i_j = 1 / (SUM_k ( ( ||x_i - c_j||)/ (||x_i - c_k||) ) pow (2/(m-1)))
  *  3.3 Until
  *      MAX_i_k{ ||u_i_k  - u'_i_k || } < epsilon
- *
+
  */
 class FuzzyCMeans(
     private var k: Int,
@@ -111,7 +111,31 @@ class FuzzyCMeans(
 
     // Execute Dunn & Bezdek algorithm from Fuzzy clustering
     val notConverged :Boolean = true
-    while(notConverged){
+
+
+    while(notConverged && iteration < maxIterations){
+      //data.mapPartitions{ points =>
+
+      //get the data array:
+      var dataArr: Array[BreezeVectorWithNorm] = data.toArray()
+
+
+//        (0 until membershipMatrix.getColsNum()).foreach{ j =>
+//          // new center calculation:
+//          // c_j = (SUM_i(u_i_j * x_i) ) / (SUM_i (u_i_j) )
+//
+//          // calculate the SUM_i(u_i_j)
+          var columnSum :Float = 0
+          for(i <- 0 until membershipMatrix.getRowsNum()){
+            columnSum += membershipMatrix.getValue(i, 0)
+          }
+
+          // calculate the SUM_i(u_i_j * x_i)
+
+
+        //}
+      //}
+
 
         
       }
@@ -212,6 +236,8 @@ class MembershipMatrix(
   def setValue(i: Int, j: Int, value:Float) = {
     matrix(i)(j) = value
   }
+
+  def getValue(row: Int, col: Int ) = this.matrix(row)(col)
 
   def initRandomMatrix() = {
     /**
