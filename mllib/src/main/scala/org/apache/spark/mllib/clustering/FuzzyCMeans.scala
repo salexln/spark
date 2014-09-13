@@ -110,12 +110,13 @@ class FuzzyCMeans(
     val iterationStartTime = System.nanoTime()
 
     // Execute Dunn & Bezdek algorithm from Fuzzy clustering
-    val notConverged :Boolean = true
+    var notConverged :Boolean = true
 
 
     while(notConverged && iteration < maxIterations){
       //data.mapPartitions{ points =>
 
+      //get the data array:
       var dataArr: Array[BreezeVectorWithNorm] = data.toArray()
 
       // new center calculation:
@@ -128,16 +129,22 @@ class FuzzyCMeans(
           columnSum += membershipMatrix.getValue(i, j)
         }
 
-        val totalSum: Float =0
+        var totalSum: Float = 0
         // calculate the SUM_i(u_i_j * x_i)
         for(i <-0 until membershipMatrix.getRowsNum()){
-          //totalSum = totalSum + membershipMatrix.getValue(i,j) //*dataArr(i)
+          totalSum += membershipMatrix.getValue(i,j) //*dataArr(i)
         }
 
-        //val newCenter = totalSum / columnSum
+        val total = (totalSum / columnSum).toDouble
+        val newCenter = new BreezeVectorWithNorm(total)
+        //var newCenter = totalSum / columnSum
+
+        // update the center array:
+        // ALEX - should we update (run)(j) like in KMeans.scala?
+        centers(iteration)(j) = newCenter
 
       }
-      //get the data array:
+
 
 
 
