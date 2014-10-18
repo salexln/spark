@@ -96,6 +96,7 @@ class FuzzyCMeans(
    * u_i_j - the degree of membership (taken from the matrix)
    * c_j - the d-dimension center of the cluster
    *
+   * this method updates the centers according to the following formula
    * c_i = (SUM_i(u_i_j * x_i) ) / (SUM_i (u_i_j) )
    */
   override def calculateCenters(data: RDD[BreezeVectorWithNorm]) : KMeansModel  = {
@@ -136,16 +137,24 @@ class FuzzyCMeans(
         }
 
         var total = (totalSum / columnSum).toDouble
+
+        var totalArr = new Array[Double](0)
+        totalArr(0) = total
+
         //var total: Double = 0
+        //var newCenter = total
 
-        var count = 10
-        var sum : Double = 5
-        sum /= count.toDouble
-        var vec : BV[Double]
-        vec(0) = sum
-        val newCenter2 = new BreezeVectorWithNorm(vec)
 
-        val newCenter = new BreezeVectorWithNorm(total)
+
+        val newCenter = new BreezeVectorWithNorm(totalArr)
+//        var count = 10
+//        var sum : Double = 5
+//        sum /= count.toDouble
+//        var vec : BV[Double]
+//        vec(0) = sum
+//        val newCenter2 = new BreezeVectorWithNorm(vec)
+
+        //val newCenter = new BreezeVectorWithNorm(total)
         //var newCenter = totalSum / columnSum
 
         // update the center array:
