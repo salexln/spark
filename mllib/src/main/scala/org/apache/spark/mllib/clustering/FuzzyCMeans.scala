@@ -113,12 +113,17 @@ class FuzzyCMeans(
     // Execute Dunn & Bezdek algorithm from Fuzzy clustering
     var notConverged :Boolean = true
 
+    //var dataArr: Array[BreezeVectorWithNorm] = data.toArray()
+    var dataArray = data.collect()(0).getDataVector()
+    //dataArr(0).getDataVector()
+
+
 
     while(notConverged && iteration < maxIterations){
       //data.mapPartitions{ points =>
 
       //get the data array:
-      var dataArr: Array[BreezeVectorWithNorm] = data.toArray()
+      //var dataArr: Array[BreezeVectorWithNorm] = data.toArray()
 
       // new center calculation:
       // c_j = (SUM_i(u_i_j * x_i) ) / (SUM_i (u_i_j) )
@@ -133,18 +138,15 @@ class FuzzyCMeans(
         var totalSum: Float = 0
         // calculate the SUM_i(u_i_j * x_i)
         for(i <-0 until membershipMatrix.getRowsNum()){
-          totalSum += membershipMatrix.getValue(i,j) //*dataArr(i)
+          totalSum += membershipMatrix.getValue(i,j) * dataArray(i).toFloat
         }
 
         var total = (totalSum / columnSum).toDouble
 
+        //ALEX - workaround: for some reason each center is a vector so for now I'm doing
+        // the following:
         var totalArr = new Array[Double](0)
         totalArr(0) = total
-
-        //var total: Double = 0
-        //var newCenter = total
-
-
 
         val newCenter = new BreezeVectorWithNorm(totalArr)
 //        var count = 10
@@ -160,9 +162,51 @@ class FuzzyCMeans(
         // update the center array:
         // ALEX - should we update (run)(j) like in KMeans.scala?
         centers(iteration)(j) = newCenter
-
       }
 
+      //ALEX - now that we've calculated the new centers, we need to check if further iterations are needed
+      // in order to do that, we need to create new membership matrix and check for difference from
+      // the current one
+      // new membership matrix:
+      //
+      // u_i_j = 1 / ( SUM_k ( ||x_i - c_j|| / ||x_i - c_k||) ^ (2/(m-1)) )
+      //
+      // and then the difference:
+      // if || new_U - U || < epsilon then STOP, otherwise CONTINUE
+
+      var new_membership_matrix =new MembershipMatrix(membershipMatrix.getRowsNum(), membershipMatrix.getColsNum());
+      // update the new matrix according to:
+      // u_i_j = 1 / ( SUM_k ( ||x_i - c_j|| / ||x_i - c_k||) ^ (2/(m-1)) )
+
+      for (i <- 0 until membershipMatrix.getRowsNum()) {
+        for (j <- 0 until membershipMatrix.getColsNum()) {
+
+          var temp1:Float = 0
+          for(k <-0 until centers.length) {
+
+            var center_i = centers(iteration)(j)
+            var center_k = centers(iteration)(k)
+
+            var a = dataArray(i) - center_i.getDataVector()(0)
+            var b = dataArray(i) - center_k.getDataVector()(0)
+
+            temp1 = math.abs(a).toFloat / math.abs(b).toFloat
+
+            // temp1 = Math.abs(dataArr(i) - center_i) / Math.abs(dataArr(i) - center_j)
+
+            //temp1 = Math.abs(dataArr(i) - centers(iteration)(j)) / Math.abs(dataArr(i) - centers(iteration)(k))
+
+            //ALEX should decide on m (in that case m is 10)
+            //var temp3:Double = temp1.toDouble
+            //var power:Double = 2/10;
+            var temp2:Double  = Math.pow(temp1.toDouble, (2/(10+1)))
+
+            new_membership_matrix.setValue(i,j,temp2.toFloat)
+          }
+        }
+      }
+
+      // if || new_U - U || < epsilon then STOP, otherwise CONTINUE
 
 
 
