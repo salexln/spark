@@ -114,7 +114,7 @@ class FuzzyCMeans(
     var notConverged :Boolean = true
 
     //var dataArr: Array[BreezeVectorWithNorm] = data.toArray()
-    var dataArray = data.collect()(0).getDataVector()
+    var dataArr = data.collect()(0).getDataVector()
     //dataArr(0).getDataVector()
 
 
@@ -138,7 +138,7 @@ class FuzzyCMeans(
         var totalSum: Float = 0
         // calculate the SUM_i(u_i_j * x_i)
         for(i <-0 until membershipMatrix.getRowsNum()){
-          totalSum += membershipMatrix.getValue(i,j) * dataArray(i).toFloat
+          totalSum += membershipMatrix.getValue(i,j) * dataArr(i).toFloat
         }
 
         var total = (totalSum / columnSum).toDouble
@@ -187,8 +187,8 @@ class FuzzyCMeans(
             var center_i = centers(iteration)(j)
             var center_k = centers(iteration)(k)
 
-            var a = dataArray(i) - center_i.getDataVector()(0)
-            var b = dataArray(i) - center_k.getDataVector()(0)
+            var a = dataArr(i) - center_i.getDataVector()(0)
+            var b = dataArr(i) - center_k.getDataVector()(0)
 
             temp1 = math.abs(a).toFloat / math.abs(b).toFloat
 
