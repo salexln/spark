@@ -52,7 +52,7 @@ class FuzzyCMeans(
 //extends KMeans(k,maxIterations, runs, initializationMode, initializationSteps, epsilon)
   extends KMeans
 {
-  val membershipMatrix : MembershipMatrix = null
+  var membershipMatrix : MembershipMatrix = null
 
   //override def run(data: RDD[ Vector]): KMeansModel = {
   override  def run(data: RDD[Vector]): KMeansModel = {
@@ -106,7 +106,7 @@ class FuzzyCMeans(
     val costs = Array.fill(runs)(0.0)
 
     var activeRuns = new ArrayBuffer[Int] ++ (0 until runs)
-    var iteration = 0
+    var iteration = -1
 
     val iterationStartTime = System.nanoTime()
 
@@ -120,6 +120,7 @@ class FuzzyCMeans(
 
 
     while(notConverged && iteration < maxIterations){
+      iteration = iteration + 1
       //data.mapPartitions{ points =>
 
       //get the data array:
@@ -207,7 +208,13 @@ class FuzzyCMeans(
       }
 
       // if || new_U - U || < epsilon then STOP, otherwise CONTINUE
-
+      var diffMatirx = membershipMatrix - new_membership_matrix
+      if(diffMatirx.getNornValue >= epsilon) {
+        membershipMatrix = new_membership_matrix
+      }
+      else {
+        notConverged = true
+      }
 
 
 
@@ -358,6 +365,38 @@ class MembershipMatrix(
 //    }
     println("done printing")
   }
+
+  def -(that:MembershipMatrix): MembershipMatrix = {
+    if (that.getColsNum() != getColsNum() || that.getRowsNum() != getRowsNum()) {
+      null
+    }
+    else {
+      // subtract:
+      var diffMatrix = new MembershipMatrix(getRowsNum(),getColsNum())
+
+      for(i <- 0 until getRowsNum()) {
+        for(j <- 0 until getColsNum()) {
+          val diff = getValue(i,j) - that.getValue(i,j)
+          diffMatrix.setValue(i,j,diff)
+        }
+      }
+      diffMatrix
+    }
+  }
+
+  //this is an implementation of the "regular" 2-norm
+  def getNornValue : Float = {
+    var value:Float = 0
+    for(i <- 0 until getRowsNum()) {
+      for(j <- 0 until getColsNum()) {
+        value = value + (math.pow(getValue(i,j), 2)).toFloat
+      }
+    }
+
+    value = (math.pow(value, 0.5)).toFloat
+    value
+  }
+
 
 }
 
