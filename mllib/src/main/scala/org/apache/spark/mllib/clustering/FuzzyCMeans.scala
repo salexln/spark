@@ -82,6 +82,8 @@ class FuzzyCMeans(
   Array[Array[BreezeVectorWithNorm]] = {
 
     //init the membership matrix with random floats
+    var dataArr = data.collect()(0).getDataVector()
+    membershipMatrix = new MembershipMatrix(this.k, dataArr.size)
     membershipMatrix.initRandomMatrix()
 
     //init the centers of the cluster
